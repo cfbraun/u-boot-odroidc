@@ -46,6 +46,8 @@ downcase(char *str)
 
 static  block_dev_desc_t *cur_dev = NULL;
 static unsigned long part_offset = 0;
+static unsigned long part_size;
+
 static int cur_part = 1;
 
 #define DOS_PART_TBL_OFFSET		0x1be
@@ -95,6 +97,7 @@ fat_register_device(block_dev_desc_t *dev_desc, int part_no)
 	if (!get_partition_info (dev_desc, part_no, &info)) {
 		part_offset = info.start;
 		cur_part = part_no;
+		part_size = info.size;
 		if (dev_desc->block_read (dev_desc->dev, part_offset, 1, (ulong *) buffer) != 1) {
 			if (dev_desc->block_read (dev_desc->dev, 0, 1, (ulong *) buffer) != 1) {
 				printf ("** Can't read from device %d **\n", dev_desc->dev);
