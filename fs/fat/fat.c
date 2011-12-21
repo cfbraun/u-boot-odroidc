@@ -44,16 +44,18 @@ downcase(char *str)
 	}
 }
 
-static  block_dev_desc_t *cur_dev = NULL;
+static block_dev_desc_t *cur_dev;
+static unsigned int cur_part_nr;
+static disk_partition_t cur_part_info;
+
 static unsigned long part_offset = 0;
 static unsigned long part_size;
 
 static int cur_part = 1;
 
-#define DOS_PART_TBL_OFFSET		0x1be
-#define DOS_PART_MAGIC_OFFSET	0x1fe
-#define FAT_FS_TYPE_OFFSET		0x36
-#define FAT32_FS_TYPE_OFFSET		0x52
+#define DOS_BOOT_MAGIC_OFFSET	0x1fe
+#define DOS_FS_TYPE_OFFSET		0x36
+#define DOS_FS32_TYPE_OFFSET		0x52
 
 int disk_read (__u32 startblock, __u32 getsize, __u8 * bufptr)
 {
@@ -72,7 +74,6 @@ int
 fat_register_device(block_dev_desc_t *dev_desc, int part_no)
 {
 	unsigned char buffer[dev_desc->blksz];
-	disk_partition_t info;
 
 	if (!dev_desc->block_read)
 		return -1;
@@ -82,8 +83,8 @@ fat_register_device(block_dev_desc_t *dev_desc, int part_no)
 		printf ("** Can't read from device %d **\n", dev_desc->dev);
 		return -1;
 	}
-	if (buffer[DOS_PART_MAGIC_OFFSET] != 0x55 ||
-		buffer[DOS_PART_MAGIC_OFFSET + 1] != 0xaa) {
+	if (buffer[DOS_BOOT_MAGIC_OFFSET] != 0x55 ||
+		buffer[DOS_BOOT_MAGIC_OFFSET + 1] != 0xaa) {
 		/* no signature found */
 		return -1;
 	}
@@ -94,10 +95,10 @@ fat_register_device(block_dev_desc_t *dev_desc, int part_no)
      defined(CONFIG_MMC) || \
      defined(CONFIG_SYSTEMACE) )
 	/* First we assume, there is a MBR */
-	if (!get_partition_info (dev_desc, part_no, &info)) {
-		part_offset = info.start;
+	if (!get_partition_info (dev_desc, part_no, &cur_part_info)) {
+		part_offset = cur_part_info.start;
 		cur_part = part_no;
-		part_size = info.size;
+		part_size = cur_part_info.size;
 		if (dev_desc->block_read (dev_desc->dev, part_offset, 1, (ulong *) buffer) != 1) {
 			if (dev_desc->block_read (dev_desc->dev, 0, 1, (ulong *) buffer) != 1) {
 				printf ("** Can't read from device %d **\n", dev_desc->dev);
@@ -106,9 +107,9 @@ fat_register_device(block_dev_desc_t *dev_desc, int part_no)
 			cur_part = 1;
 			part_offset = 0;
 		}
-		if (strncmp((char *)&buffer[FAT_FS_TYPE_OFFSET], "FAT", 3) && strncmp((char *)&buffer[FAT32_FS_TYPE_OFFSET],"FAT",3))
+		if (strncmp((char *)&buffer[DOS_FS_TYPE_OFFSET], "FAT", 3) && strncmp((char *)&buffer[DOS_FS32_TYPE_OFFSET],"FAT",3))
 			return -1;
-	} else if (!strncmp((char *)&buffer[FAT_FS_TYPE_OFFSET], "FAT", 3) || !strncmp((char *)&buffer[FAT32_FS_TYPE_OFFSET],"FAT",3)) {
+	} else if (!strncmp((char *)&buffer[DOS_FS_TYPE_OFFSET], "FAT", 3) || !strncmp((char *)&buffer[DOS_FS32_TYPE_OFFSET],"FAT",3)) {
 		/* ok, we assume we are on a PBR only */
 		cur_part = 1;
 		part_offset = 0;
@@ -119,11 +120,11 @@ fat_register_device(block_dev_desc_t *dev_desc, int part_no)
 	}
 
 #else
-	if (!strncmp((char *)&buffer[FAT_FS_TYPE_OFFSET],"FAT",3) || !strncmp((char *)&buffer[FAT32_FS_TYPE_OFFSET],"FAT",3)) {
+	if (!strncmp((char *)&buffer[DOS_FS_TYPE_OFFSET],"FAT",3) || !strncmp((char *)&buffer[DOS_FS32_TYPE_OFFSET],"FAT",3)) {
 		/* ok, we assume we are on a PBR only */
 		cur_part = 1;
 		part_offset = 0;
-		info.start = part_offset;
+		cur_part_info.start = part_offset;
 	} else {
 		/* FIXME we need to determine the start block of the
 		 * partition where the DOS FS resides. This can be done
@@ -133,9 +134,25 @@ fat_register_device(block_dev_desc_t *dev_desc, int part_no)
 		part_offset = 32;
 		cur_part = 1;
 	}
+
 #endif
-	return 0;
+
+	/* Check if it's actually a DOS volume */
+	if (memcmp(buffer + DOS_BOOT_MAGIC_OFFSET, "\x55\xAA", 2)) {
+		cur_dev = NULL;
+		return -1;
+	}
+
+	/* Check for FAT12/FAT16/FAT32 filesystem */
+	if (!memcmp(buffer + DOS_FS_TYPE_OFFSET, "FAT", 3))
+		return 0;
+	if (!memcmp(buffer + DOS_FS32_TYPE_OFFSET, "FAT32", 5))
+		return 0;
+
+	cur_dev = NULL;
+	return -1;
 }
+
 
 /*
  * Copy string, padding with spaces.
@@ -409,8 +426,8 @@ int fat_format_device(block_dev_desc_t *dev_desc, int part_no)
                 printf ("** Can't read from device %d **\n", dev_desc->dev);
                 return -1;
         }
-        if (buffer[DOS_PART_MAGIC_OFFSET] != 0x55 ||
-                buffer[DOS_PART_MAGIC_OFFSET + 1] != 0xaa) {
+        if (buffer[DOS_BOOT_MAGIC_OFFSET] != 0x55 ||
+                buffer[DOS_BOOT_MAGIC_OFFSET + 1] != 0xaa) {
                 printf("** MBR is broken **\n");
                 /* no signature found */
                 return -1;
@@ -425,7 +442,7 @@ int fat_format_device(block_dev_desc_t *dev_desc, int part_no)
         if (!get_partition_info (dev_desc, part_no, &info)) {
                 part_offset = info.start;
                 cur_part = part_no;
-        } else if (!strncmp((char *)&buffer[FAT_FS_TYPE_OFFSET], "FAT", 3)) {
+        } else if (!strncmp((char *)&buffer[DOS_FS_TYPE_OFFSET], "FAT", 3)) {
                 /* ok, we assume we are on a PBR only */
                 cur_part = 1;
                 part_offset = 0;
