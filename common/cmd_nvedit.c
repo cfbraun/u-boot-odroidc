@@ -59,6 +59,7 @@ DECLARE_GLOBAL_DATA_PTR;
     !defined(CONFIG_ENV_IS_IN_DATAFLASH)	&& \
     !defined(CONFIG_ENV_IS_IN_MG_DISK)	&& \
     !defined(CONFIG_ENV_IS_IN_MMC)  && \
+	!defined(CONFIG_ENV_IS_IN_FAT)		&& \
     !defined(CONFIG_ENV_IS_IN_NAND)	&& \
     !defined(CONFIG_ENV_IS_IN_NVRAM)	&& \
     !defined(CONFIG_ENV_IS_IN_ONENAND)	&& \
@@ -70,7 +71,7 @@ DECLARE_GLOBAL_DATA_PTR;
 	!defined(CONFIG_SPI_NAND_EMMC_COMPATIBLE) &&\
 	!defined(CONFIG_STORE_COMPATIBLE)
 # error Define one of CONFIG_ENV_IS_IN_{EEPROM|FLASH|DATAFLASH|ONENAND|\
-SPI_FLASH|MG_DISK|NVRAM|MMC|NOWHERE}
+SPI_FLASH|MG_DISK|NVRAM|MMC|FAT|NOWHERE}
 #endif
 
 #define XMK_STR(x)	#x
@@ -172,7 +173,7 @@ int do_env_print (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 int _do_env_set (int flag, int argc, char * const argv[])
 {
-    
+
 	bd_t  *bd = gd->bd;
 	int   i, len;
 	int   console = -1;
@@ -1041,8 +1042,8 @@ char * args[]=
 "disp.fromleft"
 };
 
-void set_env_without_def() 
-{ 
+void set_env_without_def()
+{
 
 	int size_args = sizeof(args)/sizeof(char*);
 
@@ -1051,7 +1052,7 @@ void set_env_without_def()
 
 
 int do_defenv (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{	
+{
 	set_env_without_def();
 #ifdef  CONFIG_STORE_COMPATIBLE
 	run_command("put  store",0);
@@ -1084,7 +1085,7 @@ int	do_defenv_without (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 
 	char *init_val=NULL;
 	int i,envCnt=0;
-	
+
 	#define	CONFIG_ENV_NUMBER	80					//effective environment variable number of max
 	char *varName[CONFIG_ENV_NUMBER];
 	char  varValue[CONFIG_ENV_NUMBER][CONFIG_SYS_CBSIZE];
@@ -1093,22 +1094,22 @@ int	do_defenv_without (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 	if (argc < 2)
 		return cmd_usage(cmdtp);
 
-	
+
 	for(i=1;i<argc;i++)
 	{
 		init_val = getenv(argv[i]);				//get environment variable value
 		if(init_val)
 		{
 			varName[envCnt]  = argv[i];
-			strcpy(varValue[envCnt], init_val);			
+			strcpy(varValue[envCnt], init_val);
 			envCnt ++;
-			
+
 			printf("%s = %s\n",varName[envCnt-1],varValue[envCnt-1]);
 		}
 		//else
 		//	printf("## Error: \"%s\" not defined\n",argv[i]);
 	}
-	
+
 	set_default_env(NULL);						//defenv
 
 	if(envCnt>0)
@@ -1116,7 +1117,7 @@ int	do_defenv_without (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 		for(i=0;i<envCnt;i++)
 			setenv((char *)varName[i],(char *)varValue[i]);  //set specified environment variables
 	}
-		
+
 	return 0;
 }
 
@@ -1130,14 +1131,14 @@ U_BOOT_CMD(
 #ifdef  CONFIG_STORE_COMPATIBLE
 
 void replace(char* org, char* find, char* rep)
-{	
-	char *p1, *p2;		
-	while(p1 = strstr(org, find)){		
-	p2 = p1 + strlen(find);		
-	memmove(p1 + strlen(rep), p2, strlen(p2) + 1);		
-	memcpy(p1, rep, strlen(rep));	
+{
+	char *p1, *p2;
+	while(p1 = strstr(org, find)){
+	p2 = p1 + strlen(find);
+	memmove(p1 + strlen(rep), p2, strlen(p2) + 1);
+	memcpy(p1, rep, strlen(rep));
 	}
-	
+
 	return;
 }
 
@@ -1148,11 +1149,11 @@ int put_storage(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	char rep[20];
 	unsigned char store=0,tmp = 0;
 	char *p1 = NULL, *p2;
-	
+
 	if (argc < 2)
 		return cmd_usage(cmdtp);
-	
-	cmd = argv[1];	
+
+	cmd = argv[1];
 
 	if(!strcmp(cmd,"storage")){
         char env_bootargs[512];
@@ -1178,7 +1179,7 @@ int put_storage(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 				return -1;
 			}
 			p2 = p1+strlen("storage")+1;
-			
+
 			tmp = simple_strtoul(p2 ,NULL,16);
 		//	printf("@put_storage: tmp %d store %d\n",tmp,store);
 			if(tmp!= store){
@@ -1211,7 +1212,7 @@ int put_storage(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 				return -1;
 			}
 			p2 = p1+strlen("storage")+1;
-			
+
 			tmp = simple_strtoul(p2 ,NULL,16);
 		//	printf("@put_storage: tmp %d store %d\n",tmp,store);
 			if(tmp!= store){
@@ -1229,7 +1230,7 @@ int put_storage(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}else{
 		return cmd_usage(cmdtp);
 	}
-	
+
 	return 0;
 }
 
