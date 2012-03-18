@@ -785,6 +785,7 @@ int boot_get_ramdisk (int argc, char * const argv[], bootm_headers_t *images,
 	ulong rd_addr, rd_load;
 	ulong rd_data, rd_len;
 	const image_header_t *rd_hdr;
+	char *end;
 #if defined(CONFIG_FIT)
 	void		*fit_hdr;
 	const char	*fit_uname_config = NULL;
@@ -968,10 +969,17 @@ int boot_get_ramdisk (int argc, char * const argv[], bootm_headers_t *images,
 			images->fit_noffset_rd = rd_noffset;
 			break;
 #endif
-		default:
-			puts ("Wrong Ramdisk Image Format\n");
-			rd_data = rd_len = rd_load = 0;
-			return 1;
+#ifdef CONFIG_SUPPORT_RAW_INITRD
+			if (argc >= 3 && (end = strchr(argv[2], ':'))) {
+				rd_len = simple_strtoul(++end, NULL, 16);
+				rd_data = rd_addr;
+			} else
+#endif
+			{
+				puts("Wrong Ramdisk Image Format\n");
+				rd_data = rd_len = rd_load = 0;
+				return 1;
+			}
 		}
 
 #if defined(CONFIG_B2) || defined(CONFIG_EVB4510) || defined(CONFIG_ARMADILLO)
@@ -1271,8 +1279,8 @@ int boot_relocate_fdt (struct lmb *lmb, ulong bootmap_base,
 	/* position on a 4K boundary before the alloc_current */
 	/* Pad the FDT by a specified amount */
 	of_len = *of_size + CONFIG_SYS_FDT_PAD;
-	
-#if defined(CONFIG_ANDROID_IMG) & defined(CONFIG_OF_LIBFDT)	
+
+#if defined(CONFIG_ANDROID_IMG) & defined(CONFIG_OF_LIBFDT)
 	of_start = (void *)(unsigned long)lmb_alloc_base(lmb, of_len, 0x1000, relocate_addr);
 //	of_start = (void *)(unsigned long)lmb_alloc_base(lmb, of_len, 0x1000,
 //			(CONFIG_SYS_BOOTMAPSZ + bootmap_base));
