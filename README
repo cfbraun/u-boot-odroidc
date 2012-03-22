@@ -1105,6 +1105,15 @@ The following options need to be configured:
 		to disable the command chpart. This is the default when you
 		have not defined a custom partition
 
+- FAT(File Allocation Table) filesystem write function support:
+		CONFIG_FAT_WRITE
+
+		Define this to enable support for saving memory data as a
+		file in FAT formatted partition.
+
+		This will also enable the command "fatwrite" enabling the
+		user to write files to FAT.
+
 - Keyboard Support:
 		CONFIG_ISA_KEYBOARD
 
