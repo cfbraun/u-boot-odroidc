@@ -31,6 +31,7 @@
 #include <fat.h>
 #include <asm/byteorder.h>
 #include <part.h>
+#include <linux/ctype.h>
 
 /*
  * Convert a string to lowercase.
@@ -38,7 +39,7 @@
 static void downcase (char *str)
 {
 	while (*str != '\0') {
-		TOLOWER(*str);
+		*str = tolower(*str);
 		str++;
 	}
 }
