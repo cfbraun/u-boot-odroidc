@@ -392,7 +392,7 @@ fat_size)
  */
 int fat_format_device(block_dev_desc_t *dev_desc, int part_no)
 {
-        unsigned char buffer[SECTOR_SIZE];
+        unsigned char buffer[dev_desc->blksz];
         unsigned long part_offset;
         int cur_part;
         disk_partition_t info;
