@@ -36,9 +36,22 @@
 
 char *env_name_spec = "FAT";
 
-env_t *env_ptr;
+extern env_t *env_ptr;
+extern uchar default_environment[];
+
+#ifdef ENV_IS_EMBEDDED
+extern uchar environment[];
+env_t *env_ptr = (env_t *)(&environment[0]);
+#else /* ! ENV_IS_EMBEDDED */
+env_t *env_ptr = NULL;
+#endif /* ENV_IS_EMBEDDED */
 
 DECLARE_GLOBAL_DATA_PTR;
+
+uchar env_get_char_spec(int index)
+{
+	return *((uchar *)(gd->env_addr + index));
+}
 
 int env_init(void)
 {
@@ -61,7 +74,7 @@ int saveenv(void)
 	int err;
 
 	res = (char *)&env_new.data;
-	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE, 0, NULL);
+	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE);
 	if (len < 0) {
 		error("Cannot export environment: errno = %d\n", errno);
 		return 1;
@@ -76,7 +89,6 @@ int saveenv(void)
 			return 1;
 		}
 
-		mmc->has_init = 0;
 		mmc_init(mmc);
 	}
 #endif /* CONFIG_MMC */
@@ -126,7 +138,6 @@ void env_relocate_spec(void)
 			return;
 		}
 
-		mmc->has_init = 0;
 		mmc_init(mmc);
 	}
 #endif /* CONFIG_MMC */
