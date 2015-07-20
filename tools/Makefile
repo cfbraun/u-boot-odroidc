@@ -61,6 +61,7 @@ BIN_FILES-$(CONFIG_ENV_IS_IN_NVRAM) += envcrc$(SFX)
 BIN_FILES-$(CONFIG_ENV_IS_IN_SPI_FLASH) += envcrc$(SFX)
 BIN_FILES-$(CONFIG_CMD_NET) += gen_eth_addr$(SFX)
 BIN_FILES-$(CONFIG_CMD_LOADS) += img2srec$(SFX)
+BIN_FILES-y += mkenvimage$(SFX)
 BIN_FILES-$(CONFIG_INCA_IP) += inca-swap-bytes$(SFX)
 BIN_FILES-y += mkimage$(SFX)
 BIN_FILES-$(CONFIG_NETCONSOLE) += ncb$(SFX)
@@ -85,6 +86,8 @@ OBJ_FILES-$(CONFIG_CMD_LOADS) += img2srec.o
 OBJ_FILES-$(CONFIG_INCA_IP) += inca-swap-bytes.o
 NOPED_OBJ_FILES-y += kwbimage.o
 NOPED_OBJ_FILES-y += imximage.o
+NOPED_OBJ_FILES-y += omapimage.o
+NOPED_OBJ_FILES-y += mkenvimage.o
 NOPED_OBJ_FILES-y += mkimage.o
 OBJ_FILES-$(CONFIG_NETCONSOLE) += ncb.o
 NOPED_OBJ_FILES-y += os_support.o
@@ -178,6 +181,9 @@ $(obj)inca-swap-bytes$(SFX):	$(obj)inca-swap-bytes.o
 	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
+$(obj)mkenvimage$(SFX):	$(obj)crc32.o $(obj)mkenvimage.o
+	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
+
 $(obj)mkimage$(SFX):	$(obj)crc32.o \
 			$(obj)default_image.o \
 			$(obj)fit_image.o \
@@ -215,7 +221,7 @@ $(LIBUCL_FILE):
 
 $(obj)bin2code$(SFX): $(obj)bin2code.o
 	$(HOSTCC) -g $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
-		
+
 # Some of the tool objects need to be accessed from outside the tools directory
 $(obj)%.o: $(SRCTREE)/common/%.c
 	$(HOSTCC) -g $(HOSTCFLAGS_NOPED) -c -o $@ $<
