@@ -341,4 +341,17 @@
 #define CONFIG_CMD_EXT4
 #define CONFIG_FAT_WRITE
 
+/* Save the env to the fat partition */
+#ifndef CONFIG_SPL_BUILD
+#undef  CONFIG_ENV_IS_NOWHERE
+#undef  CONFIG_ENV_IS_IN_NAND
+#undef  CONFIG_ENV_IS_IN_MMC
+#define CONFIG_ENV_IS_IN_FAT
+#define FAT_ENV_INTERFACE               "mmc"
+#define FAT_ENV_DEVICE                  0
+#define FAT_ENV_PART                    1
+#define FAT_ENV_FILE                    "uboot.env"
+#define CONFIG_SYS_REDUNDAND_ENVIRONMENT // After discussion on IRC we use 5 byte headers to make life easier.
+#endif
+
 #endif //__CONFIG_ODROIDC_H__
