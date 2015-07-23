@@ -168,7 +168,7 @@
 #define CONFIG_BOOTCOMMAND              "bootm"
 
 #define CONFIG_AUTO_COMPLETE            1
-#define CONFIG_ENV_SIZE                 (32 * 1024)     // unit: bytes
+#define CONFIG_ENV_SIZE                 (128 * 1024)     // unit: bytes
 #define CONFIG_ENV_OFFSET               (512 * 1024)    // unit: bytes
 
 #define CONFIG_MMC_BOOT
