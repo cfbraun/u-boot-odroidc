@@ -300,7 +300,7 @@ static int bootm_start(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 
 		images.os.end = image_get_image_end (temp_os_hdr);
 		images.os.load = image_get_load (temp_os_hdr);
-		images.rd_start = ((ulong)temp_android_hdr->kernel_size + 0x800 + (ulong)os_hdr 
+		images.rd_start = ((ulong)temp_android_hdr->kernel_size + 0x800 + (ulong)os_hdr
 			+  ((ulong)temp_android_hdr->page_size - 1)) & (~((ulong)temp_android_hdr->page_size - 1));
 		images.rd_end = images.rd_start + (ulong)temp_android_hdr->ramdisk_size;
 		printf("    Ramdisk start addr = 0x%x, len = 0x%x\n",images.rd_start,temp_android_hdr->ramdisk_size );
@@ -388,7 +388,7 @@ static int bootm_start(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 #else
 	images.os.start = (ulong)os_hdr;
 #endif
-	
+
 	images.state = BOOTM_STATE_START;
 
 	return 0;
@@ -702,7 +702,7 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	AML_LOG_INIT("cmd_bootm");
 	AML_LOG_TE("cmd_bootm");
-	
+
 #ifdef TEST_UBOOT_BOOT_SPEND_TIME
 	bootm_start_time = get_utimer(0);
 #endif
@@ -744,7 +744,7 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	{
 		printf("Error! Illegal kernel image, please check!\n");
 		return ret;
-	}		
+	}
 #endif //CONFIG_M6_SECU_BOOT
 
 #ifdef CONFIG_AML_GATE_INIT
@@ -1267,7 +1267,7 @@ int do_iminfo (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 static int image_info (ulong addr)
 {
 	void *hdr = (void *)addr;
-#if defined(CONFIG_ANDROID_IMG)	
+#if defined(CONFIG_ANDROID_IMG)
 	boot_img_hdr *hdr_andr = (void *) addr;
 #endif
 
@@ -1858,6 +1858,11 @@ static int do_bootz(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong		iflag;
 	bootm_headers_t	images;
+
+#ifdef CONFIG_AML_GATE_INIT
+	extern void gate_init(void);
+	gate_init();
+#endif
 
 	if (bootz_start(cmdtp, flag, argc, argv, &images))
 		return 1;
