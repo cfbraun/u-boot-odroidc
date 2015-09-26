@@ -20,6 +20,10 @@
 //support "boot,bootd"
 //#define CONFIG_CMD_BOOTD              1
 
+//support bootz and raw initrd
+#define CONFIG_CMD_BOOTZ                1
+#define CONFIG_SUPPORT_INITRD_RAW       1
+
 //Enable HDMI Tx
 //#define CONFIG_VIDEO_AMLTVOUT         1
 //Enable LCD output
