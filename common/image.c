@@ -969,7 +969,8 @@ int boot_get_ramdisk (int argc, char * const argv[], bootm_headers_t *images,
 			images->fit_noffset_rd = rd_noffset;
 			break;
 #endif
-#ifdef CONFIG_SUPPORT_RAW_INITRD
+		}
+#ifdef CONFIG_SUPPORT_INITRD_RAW
 			if (argc >= 3 && (end = strchr(argv[2], ':'))) {
 				rd_len = simple_strtoul(++end, NULL, 16);
 				rd_data = rd_addr;
@@ -980,7 +981,6 @@ int boot_get_ramdisk (int argc, char * const argv[], bootm_headers_t *images,
 				rd_data = rd_len = rd_load = 0;
 				return 1;
 			}
-		}
 
 #if defined(CONFIG_B2) || defined(CONFIG_EVB4510) || defined(CONFIG_ARMADILLO)
 		/*
